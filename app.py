@@ -99,7 +99,7 @@ if st.button("Send"):
             system_prompt = ROLES[selected_role]["prompt"]
 
             completion = client.chat.completions.create(
-                model= "gpt-4o-mini"
+                model= "gpt-4o-mini",
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_input}
