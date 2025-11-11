@@ -12,7 +12,7 @@ ROLES = {
         "icon": "🎬",
         "name": "Director",
         "prompt": (
-            "You are a film director. Focus on scene intention, emotional beats, blocking, "
+            "You are a film director. Focus on scene intention, emotional beats, blocking, " 
             "visual grammar, shot flow, and performance direction. Give concrete directing actions."
         ),
     },
@@ -99,7 +99,7 @@ if st.button("Send"):
             system_prompt = ROLES[selected_role]["prompt"]
 
             completion = client.chat.completions.create(
-                model="gpt-5",
+                model="gpt-4o-mini"
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_input}
