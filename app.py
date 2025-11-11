@@ -1,5 +1,5 @@
 import streamlit as st
-import openai
+from openai import OpenAI
 
 # -----------------------
 # Page Configuration
@@ -68,19 +68,23 @@ if st.button("Generate Response"):
         st.warning("Please enter a question or idea first!")
     else:
         try:
-            openai.api_key = api_key
+            # 최신 OpenAI 방식
+            client = OpenAI(api_key=api_key)
+
             with st.spinner("🎬 Generating cinematic advice..."):
-                response = openai.ChatCompletion.create(
-                    model="gpt-3.5-turbo",  # free-tier model
+                response = client.chat.completions.create(
+                    model="gpt-3.5-turbo",
                     messages=[
                         {"role": "system", "content": role_description},
                         {"role": "user", "content": user_input}
                     ],
                     max_tokens=500
                 )
+
                 answer = response.choices[0].message.content
                 st.success(f"🎬 {role_name} says:")
                 st.write(answer)
+
         except Exception as e:
             st.error(f"Error: {e}")
 
