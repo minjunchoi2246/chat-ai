@@ -1,112 +1,91 @@
 import streamlit as st
-from openai import OpenAI
+import openai
 
-st.set_page_config(page_title="Film Role Chatbot", page_icon="🎬", layout="centered")
+# -----------------------
+# Page Configuration
+# -----------------------
+st.set_page_config(page_title="🎬 Film Industry Creative Chatbot", layout="wide")
+st.title("🎬 Film Industry Creative Chatbot")
+st.write("Select a film-industry role and ask your question or pitch an idea!")
 
-# ---- OpenAI client ----
-client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+# -----------------------
+# Sidebar: API Key + Role Selection
+# -----------------------
+st.sidebar.header("🔑 API & Role Settings")
 
-# ---- Film-only roles with icons ----
-ROLES = {
-    "director": {
-        "icon": "🎬",
-        "name": "Director",
-        "prompt": (
-            "You are a film director. Focus on scene intention, emotional beats, blocking, " 
-            "visual grammar, shot flow, and performance direction. Give concrete directing actions."
-        ),
-    },
-    "dp": {
-        "icon": "🎥",
-        "name": "Cinematographer",
-        "prompt": (
-            "You are a cinematographer. Provide lens choice, lighting strategy, composition logic, "
-            "movement style, and exposure decisions."
-        ),
-    },
-    "editor": {
-        "icon": "✂️",
-        "name": "Editor",
-        "prompt": (
-            "You are a film editor. Focus on rhythm, continuity, pacing, cut patterns, "
-            "and emotional clarity."
-        ),
-    },
-    "sound": {
-        "icon": "🔊",
-        "name": "Sound Designer",
-        "prompt": (
-            "You are a sound designer. Discuss ambience, Foley, perspective, dynamics, "
-            "and emotional sound motifs."
-        ),
-    },
-    "producer": {
-        "icon": "📦",
-        "name": "Producer",
-        "prompt": (
-            "You are a producer. Provide guidance on budget, scheduling, casting, crew management, "
-            "and workflow."
-        ),
-    },
-    "writer": {
-        "icon": "✍️",
-        "name": "Screenwriter",
-        "prompt": (
-            "You are a screenwriter. Focus on structure, character motivation, dialogue economy, "
-            "and thematic clarity."
-        ),
-    },
-    "storyboard": {
-        "icon": "🖼️",
-        "name": "Storyboard Artist",
-        "prompt": (
-            "You are a storyboard artist. Translate scenes into shot order, blocking, scale, "
-            "and transitions."
-        ),
-    },
-    "acting": {
-        "icon": "🎭",
-        "name": "Acting Coach",
-        "prompt": (
-            "You are an acting coach. Provide actionable notes on beats, subtext, delivery, "
-            "physicality, and emotional continuity."
-        ),
-    },
-}
-
-# ---- UI: Role selection ----
-st.title("🎬 Film-Only Role Chatbot")
-
-role_keys = list(ROLES.keys())
-role_labels = [f"{ROLES[r]['icon']} {ROLES[r]['name']}" for r in role_keys]
-
-selected_role = st.selectbox(
-    "Select a role:",
-    options=role_keys,
-    format_func=lambda r: f"{ROLES[r]['icon']} {ROLES[r]['name']}"
+# API key input
+api_key = st.sidebar.text_input(
+    "Enter your OpenAI API Key:",
+    type="password",
+    placeholder="sk-xxxxxxxxxxxxxxxx",
 )
 
-st.write("---")
+# Film industry roles
+roles = {
+    "🎥 Film Director": (
+        "You are a professional film director. Analyze everything visually: "
+        "camera angles, framing, lighting, blocking, and emotional tone. "
+        "Give advice as if planning a real movie scene."
+    ),
+    "🎬 Producer / Planner": (
+        "You are a film producer. Focus on project feasibility, budgeting, scheduling, "
+        "and resource allocation. Offer advice to make the production smooth and realistic."
+    ),
+    "🎭 Acting Coach": (
+        "You are an acting coach. Provide guidance on delivering lines, body language, "
+        "emotional depth, and scene timing. Use examples from theater or film."
+    ),
+    "🎨 Production Designer": (
+        "You are a production designer. Describe settings, props, colors, textures, "
+        "and visual storytelling elements to create immersive cinematic worlds."
+    ),
+    "🎵 Composer / Sound Designer": (
+        "You are a composer and sound designer. Suggest music, sound effects, "
+        "and auditory mood to enhance the emotions and pacing of a scene."
+    )
+}
 
-# ---- User input ----
-user_input = st.text_area("Ask something…", height=140)
+role_name = st.sidebar.selectbox("Choose a film-industry role:", list(roles.keys()))
+role_description = roles[role_name]
+st.sidebar.info(role_description)
 
-if st.button("Send"):
-    if not user_input.strip():
-        st.warning("Enter a message.")
+# -----------------------
+# User Input Area
+# -----------------------
+user_input = st.text_area(
+    "💬 Ask your question or describe your film idea:",
+    height=120,
+    placeholder="e.g., How can I make a suspenseful rooftop chase scene feel more cinematic?"
+)
+
+# -----------------------
+# Generate Response
+# -----------------------
+if st.button("Generate Response"):
+    if not api_key:
+        st.warning("⚠️ Please enter your OpenAI API key in the sidebar.")
+    elif not user_input:
+        st.warning("Please enter a question or idea first!")
     else:
-        with st.spinner("Generating response…"):
-            system_prompt = ROLES[selected_role]["prompt"]
+        try:
+            openai.api_key = api_key
+            with st.spinner("🎬 Generating cinematic advice..."):
+                response = openai.ChatCompletion.create(
+                    model="gpt-3.5-turbo",  # free-tier model
+                    messages=[
+                        {"role": "system", "content": role_description},
+                        {"role": "user", "content": user_input}
+                    ],
+                    max_tokens=500
+                )
+                answer = response.choices[0].message.content
+                st.success(f"🎬 {role_name} says:")
+                st.write(answer)
+        except Exception as e:
+            st.error(f"Error: {e}")
 
-            completion = client.chat.completions.create(
-                model= "gpt-4o-mini",
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_input}
-                ]
-            )
-
-            reply = completion.choices[0].message.content
-
-        st.subheader("Response")
-        st.write(reply)
+# -----------------------
+# Footer
+# -----------------------
+st.markdown("---")
+st.caption("Created for film creatives • Streamlit + OpenAI")
